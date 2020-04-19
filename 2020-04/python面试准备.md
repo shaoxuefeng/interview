@@ -114,7 +114,7 @@ print (player([-1,0],10)) # 向x轴负方向移动10步 [0, 20]
 
 <br/>
 
-#### 线程 --  threading 模块
+### 线程 --  threading 模块
 ##### 创建方法：
 1. 通过threading.Thread直接在线程中运行函数；直接传入函数和函数的参数  
 ```
@@ -176,7 +176,7 @@ threada.start()
 
 <br/>
 
-#### 线程池
+### 线程池
 **实现逻辑：** 队列+多个常驻现在
 1.  threadpool模块的ThreadPool
 2.  concurrent.futures模块的ThreadPoolExecutor(目前python3较多使用这个)  
@@ -223,13 +223,11 @@ threada.start()
         wait=True(默认), shutdown()函数不会返回(主线程一直阻塞)，直至线程池中所有的线程都执行完。
         wait=False, shutdown()函数立刻返回(主线程不会阻塞)
 
-
 参考:[https://www.lagou.com/lgeduarticle/37786.html](https://www.lagou.com/lgeduarticle/37786.html)
-
 
 <br/>
 
-#### 队列详解
+### 队列详解
 ##### 分类  
 **class queue.Queue(maxsize=0)**  
 &emsp;&emsp; FIFO队列，maxsize为队列最大容量，maxsize=0表示无限大  
@@ -253,7 +251,7 @@ threada.start()
 task_done()和join() -- 关注任务又没有执行，担任任务执行完用task_done()通知，所有任务执行完join()解除阻塞  
 get()、put()、empty()、full()和qsize() -- 关注队列中的元素个数，不关注队列中元素取出来后是否被使用
 
-##### 其他问题
+## 其他问题
 ##### 1. 深拷贝、浅拷贝、赋值 
 **赋值:** 对象引用的传递，相对于取别名，对象的引用计数加一，赋值前后，对象的id是一样的，因此对对象的修改，会对所有引用都产生影响    
 **浅拷贝copy**： 拷贝的是父对象，不会拷贝父对象的子对象。拷贝前后，父对象的id不同，但是子对象的id未发送改变(因为父对象保存的是子对象的引用)，因此对子对象的修改，会对拷贝前后的对象，都有影响  
