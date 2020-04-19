@@ -166,7 +166,7 @@ threada.start()
 **基本原理:**  
 &emsp;&emsp; Condition对象维护了一个锁（Lock/RLock)和一个waiting池。线程通过acquire获得Condition对象，当调用wait方法时，线程会释放Condition内部的锁并进入blocked状态，同时在waiting池中记录这个线程。当调用notify方法时，Condition对象会从waiting池中挑选一个线程，通知其调用acquire方法尝试取到锁。  
 &emsp;&emsp; 除了notify方法外，Condition对象还提供了notifyAll方法，可以通知waiting池中的所有线程尝试acquire内部锁。由于上述机制，处于waiting状态的线程只能通过notify方法唤醒，所以notifyAll的作用在于防止有的线程永远处于沉默状态。  
-**5. 消息队列:** queue.Queue()/LifoQueue() -- 先进先出队列, PriorityQueue() -- 优先级队列
+**5. 消息队列:** queue.Queue()--先进先出队列, LifoQueue()--先进后出队列, PriorityQueue()--优先级队列
         
         Queue.qsize() -- 返回队列大小
         Queue.empty() -- 判断队列释放为空，空返回True，非空返回False
@@ -229,6 +229,65 @@ threada.start()
 
 <br/>
 
-#### 消息队列详解
+#### 队列详解
+##### 分类  
+**class queue.Queue(maxsize=0)**  
+&emsp;&emsp; FIFO队列，maxsize为队列最大容量，maxsize=0表示无限大  
+**class queue.LifoQueue(maxsize=0)**  
+&emsp;&emsp; LIFO队列，maxsize为队列最大容量，maxsize=0表示无限大  
+**class queue.PriorityQueue(maxsize=0)**  
+&emsp;&emsp; 优先级队列，maxsize为队列最大容量，maxsize=0表示无限大，条目的典型为元组:`(priority_number, data)`
 
+##### task_done() 和 join()的理解:  
 
+**Queue.task_done()**  
+表示前面排队的任务已经完成，通知消息队列将消息队列计数减一。  
+每个`get()`被用于获取一个任务， 后续调用`task_done()`告诉队列，该任务的处理已经完成。  
+**注意:**  `task_done()`的计数，只争对`join()`有效，对于`qsize()`、`empty()`、`full()`无效
+
+**Queue.join()**  
+阻塞至队列中所有的元素都被接收和处理完毕。
+如果在join()前，未想Queue中添加任何条目，不会阻塞(所以，使用时需要在join所在的主线程先添加一定数据的元素)  
+
+**比较:**  
+task_done()和join() -- 关注任务又没有执行，担任任务执行完用task_done()通知，所有任务执行完join()解除阻塞  
+get()、put()、empty()、full()和qsize() -- 关注队列中的元素个数，不关注队列中元素取出来后是否被使用
+
+##### 其他问题
+##### 1. 深拷贝、浅拷贝、赋值 
+**赋值:** 对象引用的传递，相对于取别名，对象的引用计数加一，赋值前后，对象的id是一样的，因此对对象的修改，会对所有引用都产生影响    
+**浅拷贝copy**： 拷贝的是父对象，不会拷贝父对象的子对象。拷贝前后，父对象的id不同，但是子对象的id未发送改变(因为父对象保存的是子对象的引用)，因此对子对象的修改，会对拷贝前后的对象，都有影响  
+**深拷贝copy.deepcopy():** 完全开辟新的地址空间，用来保存原来的对象。新对象和原来互补影响，只是初始数据相同。  
+
+参考:[https://www.runoob.com/w3cnote/python-understanding-dict-copy-shallow-or-deep.html](https://www.runoob.com/w3cnote/python-understanding-dict-copy-shallow-or-deep.html)
+
+##### 2. return返回和yield返回的区别  
+**return:** 表示函数调用结束，返回后函数结束运行，调用函数调用栈减一  
+**yield:** 让函数变成一个生成器，生成器每次产生一个值(yield语句),然后被冻结，等待下一次唤醒，再产生新的值;    
+即函数并没有运行结束，临时变量仍然存在
+
+##### 3. 异常处理
+* try catch exception else finally
+* with语法: 实现一个上下文管理器，必须包含`__enter__`和`__exit__`
+    
+        __enter__ 执行一些初始化操作，并且函数的返回值会赋值给 as target中的target变量
+        __exit__  执行资源清理工作，它接受三个参数，异常类型、异常实例和异常栈，根据这些信息进行异常处理和资源回收
+
+##### 4. GIL(Global Interpreter Lock)  全局解释器锁
+**明确:** GIL并不是Python的特性，它是在实现Python解析器(CPython)时所引入的一个概念。   
+**观点:** GIL只会影响CPU密集型的程序，对IO密集型的程序，影响不大
+**原因:** Python开始支持多线程。而解决多线程之间数据完整性和状态同步的最简单方法自然就是加锁。 于是有了GIL这把超级大锁,即默认python内部对象是thread-safe的，无需在实现时考虑额外的内存锁和同步操作。  
+**影响:**  
+> 1. 无法充分利用多核cpu的特性
+> 2. cpu密集型操作，多线程的效果不如单线程
+
+**解决办法:**
+> 1. 使用多进程(multiprocessing)和进程池(concurrent.futures模块的ProcessPoolExecutor)
+> 2. 在python中，使用C扩展编程，cpu密集型操作转交给C执行
+> 3. 更换其他解释器(比如JPython就没有GIL)
+
+##### 5. 部分对象的底层实现
+**list:** 一个长度可变的连续数组(连续地址空间)。其中底层结构体中:ob_item 是一个指针列表，里边的每一个指针都指向列表中的元素。采用了指数过分配(空间不足时会使用4倍扩容，到5W时，会2倍扩容)，所以并不是每次操作都需要改变数组的大小。  
+**tuple:** 一个长度不可变的连续数组(连续地址空间)。  
+**dict:** 字典是通过散列表或说哈希表实现的。  
+**set:** 集合是通过散列表或说哈希表实现的。集合被实现为带有空值的字典，只有键才是实际的集合元素。  
