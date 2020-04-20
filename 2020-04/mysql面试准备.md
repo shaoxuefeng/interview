@@ -255,7 +255,15 @@ mysql 主从同步，通过日志文件实现; 为了保证数据的准确性，
 &emsp;&emsp; 2.INSERT、UPDATE等操作时，行锁更少。  
 **缺点:** 生成的binlog日志量特别大   
 **3). Mixed-based Based Replication(MBR):** 混合模式复制  
-&emsp;&emsp;  在 Mixed 模式下，MySQL 会根据执行的每一条具体的 SQL 语句来区分对待记录的日志形式，也就是在 statement 和 row 之间选择一种。
+&emsp;&emsp;  在 Mixed 模式下，MySQL 会根据执行的每一条具体的 SQL 语句来区分对待记录的日志形式，也就是在 statement 和 row 之间选择一种。  
 
-
+##### 4. in&exists对比
+**工作原理:**   
+&emsp;&emsp; **in查询** 就是先将子查询条件的记录全都查出来，假设结果集为B，共有m条记录，然后再将子查询条件的结果集分解成m个，再进行m次查询。(in查询相当于多个or条件的叠加)  
+&emsp;&emsp; **exists** 对外表用loop逐条查询，每次查询都会查看exists的条件语句，当exists里的条件语句能够返回记录行时（无论记录行是的多少，只要能返回），条件就为真，返回当前loop到的这条记录。(如果A表有n条记录，那么exists查询就是将这n条记录逐条取出，然后判断n遍exists条件。)   
+**总结:** MySQL中的in语句是把外表和内表作join连接，而exists语句是对外表作nest loop循环，每次loop循环再对内表进行查询。  
+**对比：**  
+1. 如果查询的两个表大小相当，那么用in和exists差别不大。  
+2. 如果两个表中一个表大，另一个是表小，那么IN适合于外表大而子查询表小的情况。  
+3. 如果两个表中一个表大，另一个是表小，EXISTS适合于外表小而子查询表大的情况。  
 
