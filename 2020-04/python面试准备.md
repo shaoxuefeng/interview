@@ -163,7 +163,7 @@ threada.start()
         c.notify(n)：唤醒一个或多个等待此条件变量的线程。此方法只会acquire()方法后调用。
         c.notify_all()：唤醒所有等待此条件的线程。
 
-**基本原理:**  
+&emsp;&emsp; **基本原理:**  
 &emsp;&emsp; Condition对象维护了一个锁（Lock/RLock)和一个waiting池。线程通过acquire获得Condition对象，当调用wait方法时，线程会释放Condition内部的锁并进入blocked状态，同时在waiting池中记录这个线程。当调用notify方法时，Condition对象会从waiting池中挑选一个线程，通知其调用acquire方法尝试取到锁。  
 &emsp;&emsp; 除了notify方法外，Condition对象还提供了notifyAll方法，可以通知waiting池中的所有线程尝试acquire内部锁。由于上述机制，处于waiting状态的线程只能通过notify方法唤醒，所以notifyAll的作用在于防止有的线程永远处于沉默状态。  
 **5. 消息队列:** queue.Queue()--先进先出队列, LifoQueue()--先进后出队列, PriorityQueue()--优先级队列
